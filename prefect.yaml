@@ -7,7 +7,8 @@ name: intelligent_rag_system
 prefect-version: 3.4.4
 
 # build section allows you to manage and build docker images
-build: null
+build:
+  dockerfile: ./Dockerfile
 
 # push section allows you to manage if and how this project is uploaded to remote locations
 push: null
@@ -19,7 +20,7 @@ push: null
 pull:
 - prefect.deployments.steps.git_clone:
     repository: "https://github.com/phanhoang1803/rag_system.git"
-    branch: develop
+    branch: prefect
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
