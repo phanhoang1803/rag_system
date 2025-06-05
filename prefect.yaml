@@ -13,15 +13,19 @@ build: null
 push: null
 
 # pull section allows you to provide instructions for cloning this project in remote locations
+# pull:
+# - prefect.deployments.steps.set_working_directory:
+#     directory: "C:\\Users\\phanh\\OneDrive\\M\xE1y t\xEDnh\\AI\\intelligent_rag_system"
 pull:
-- prefect.deployments.steps.set_working_directory:
-    directory: "C:\\Users\\phanh\\OneDrive\\M\xE1y t\xEDnh\\AI\\intelligent_rag_system"
+- prefect.deployments.steps.git_clone:
+    repository: "https://github.com/phanhoang1803/rag_system.git"
+    branch: develop
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
 - name: daily-enterprise-rag-ingestion
   version: null
-  tags: []
+  tags: ["data_ingestion", "rag"]
   concurrency_limit: null
   description: |-
     Main Prefect flow for ingesting data into the Enterprise RAG System.
@@ -32,8 +36,8 @@ deployments:
     name: default
     work_queue_name: default
     job_variables: {}
-  schedules:
-  - cron: '* * * * *'
+  schedule:
+    cron: '0 7 * * *'
     timezone: null
     day_or: true
     active: true

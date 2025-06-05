@@ -11,3 +11,4 @@ venv/
 data/processed/
 chroma_db_data/
 outputs/
+chroma_data/

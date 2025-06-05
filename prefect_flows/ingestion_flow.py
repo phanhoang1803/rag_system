@@ -7,11 +7,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from prefect import flow, task
-# from prefect.deployments import Deployment
-# prefect.exceptions.PrefectImportError: `prefect.deployments:Deployment` has been removed. Use `flow.serve()`, `flow.deploy()`, or `prefect deploy` instead.
-from prefect.server.schemas.schedules import IntervalSchedule
-from datetime import timedelta
-from pathlib import Path
 from typing import List, Dict, Any
 
 # Import your custom modules
@@ -108,7 +103,8 @@ if __name__ == "__main__":
     # Ensure your PREFECT_API_KEY and PREFECT_API_URL are set in .env
     # and you're logged in `prefect cloud login` or `prefect profile use <your_profile>`
 
-    # Command: prefect deploy -n "daily-enterprise-rag-ingestion" -q default --cron "0 7 * * *" prefect_flows/ingestion_flow.py:enterprise_rag_ingestion_flow
+    # Command: 
+    # prefect deploy -n "daily-enterprise-rag-ingestion" -q default --cron "0 7 * * *" --storage github --path prefect_flows/ --repo https://github.com/phanhoang1803/rag_system prefect_flows/ingestion_flow.py:enterprise_rag_ingestion_flow
 
     enterprise_rag_ingestion_flow.deploy(
         name="daily-enterprise-rag-ingestion",
