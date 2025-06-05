@@ -1,0 +1,73 @@
+# intelligent_rag_system/docker-compose.yml
+
+# version: '3.8'
+services:
+  # MongoDB service (if used for other application data, not RAG knowledge base direct search)
+  # Keeping it here as per previous discussions for other app needs, but it's not
+  # directly queried by the RAGPipeline for knowledge.
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db # Persist MongoDB data
+    networks:
+      - rag_network
+    healthcheck: # Ensure MongoDB is ready before other services try to connect
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 2
+
+  # FastAPI RAG Backend Application
+  fastapi_app:
+    build: . # Build from Dockerfile in the current directory (project root)
+    container_name: fastapi_rag_app
+    ports:
+      - "8000:8000" # Expose FastAPI port
+    environment:
+      # Pass environment variables to the container
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Set up any other settings from config/settings.py if they rely on ENV vars
+      # - MONGODB_URI=mongodb://mongodb:27017/ # No longer needed by RAGPipeline for knowledge
+    volumes:
+      # Mount the ChromaDB persist directory so data is persistent across container restarts
+      - ./chroma_data:/app/chroma_data
+      # Mount raw data directory if your ingestion process runs inside this container
+      # - ./data/raw:/app/data/raw
+    networks:
+      - rag_network
+    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload # --reload for dev
+    depends_on:
+      # Only depend on MongoDB if FastAPI itself directly uses it for non-RAG features,
+      # or if the initial seed script needs it to be up.
+      # If MongoDB is entirely removed from the app's scope, this depends_on can be removed.
+      mongodb:
+        condition: service_healthy # Wait for MongoDB to be healthy
+
+  # Streamlit Frontend Application
+  streamlit_frontend:
+    build: . # Use the same Dockerfile. You might create a separate one for complex frontends.
+    container_name: streamlit_rag_frontend
+    ports:
+      - "8501:8501" # Expose Streamlit port
+    environment:
+      # Crucially, tell Streamlit where the FastAPI backend is.
+      # 'fastapi_app' is the service name defined in this docker-compose.yml
+      - FASTAPI_BACKEND_URL=http://fastapi_app:8000
+    volumes:
+      # Mount the frontend app.py for easy development without rebuilding container
+      - ./src/frontend:/app/src/frontend
+    networks:
+      - rag_network
+    command: python -m streamlit run src/frontend/app.py --server.port 8501 --server.enableCORS false # Command to run Streamlit
+    depends_on:
+      - fastapi_app # Streamlit depends on FastAPI being up
+
+volumes:
+  mongodb_data: # Volume for MongoDB persistence
+
+networks:
+  rag_network:
+    driver: bridge # Define a custom bridge network for services to communicate

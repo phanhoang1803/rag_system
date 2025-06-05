@@ -2,18 +2,19 @@
 
 ## 🎯 Project Overview
 
-This project implements a robust, modular, and scalable Retrieval-Augmented Generation (RAG) system designed to answer complex user queries by synthesizing information from diverse, heterogeneous data sources. The system leverages advanced query understanding, hybrid retrieval strategies, and intelligent answer generation to provide accurate, well-sourced responses for enterprise knowledge management.
+This project delivers a robust, modular, and scalable Retrieval-Augmented Generation (RAG) system engineered to answer complex user queries by synthesizing information from diverse enterprise data. By unifying all knowledge sources into a powerful vector database, the system leverages advanced natural language processing (NLP) to provide accurate, contextually relevant, and well-sourced responses.
+
+Our approach emphasizes a lean, LLM-centric architecture, where the Large Language Model (LLM) is responsible for both understanding nuances in queries and intelligently extracting precise information from the retrieved context, regardless of the original data's structure.
 
 ### Key Features
 
-- **Multi-Source Data Ingestion**: Supports structured (CSV, JSON, SQL), semi-structured (Markdown), and unstructured (text) data
-- **Intelligent Query Understanding**: Named Entity Recognition (NER), query rewriting, and intent classification
-- **Hybrid Retrieval**: Combines vector similarity search with keyword-based retrieval (BM25)
-- **Advanced Re-ranking**: Cross-encoder models for improved retrieval accuracy
-- **Conversation Management**: Maintains chat history for contextual responses
-- **Real-time Monitoring**: Prometheus metrics and Grafana dashboards
-- **Automated Pipeline**: Prefect-orchestrated data ingestion and processing
-- **Production-Ready**: Containerized deployment with FastAPI and Streamlit
+- **Unified Multi-Source Data Ingestion**: Seamlessly processes and indexes documents from various formats (Markdown, Plain Text, PDF, HTML, CSV, JSON) into a single vector store.
+- **Advanced Query Understanding**: Utilizes Named Entity Recognition (NER) to identify key entities and LLM-driven Query Rewriting to enhance user queries for optimal retrieval, especially in multi-turn conversations.
+- **Hybrid Retrieval with Re-ranking**: Combines Vector Similarity Search (for semantic understanding) with Keyword-based Retrieval (BM25) for comprehensive recall. Results are then refined using a Cross-Encoder Re-ranker to prioritize the most relevant information.
+- **LLM-Centric Answer Synthesis**: Leverages Google Gemini to synthesize concise, accurate, and contextually rich answers directly from the retrieved text nodes. The LLM is adept at extracting and formatting specific details (e.g., product prices, employee roles) from unstructured text, even if it originated from structured sources.
+- **Conversation Management**: Maintains a sliding window of chat history to provide contextual and coherent responses across multi-turn interactions.
+- **Real-time Monitoring**: Integrates Prometheus for capturing key application metrics and Grafana for visualizing system performance and health.
+- **Containerized Development & Deployment**: Built with FastAPI for a robust API backend and Streamlit for an intuitive web-based chat interface, all designed for consistent environments via Docker.
 
 ## 🏗️ System Architecture
 
@@ -33,14 +34,21 @@ This project implements a robust, modular, and scalable Retrieval-Augmented Gene
 │                 │    │ • Retrieval      │    │                 │
 └─────────────────┘    │ • Re-ranking     │    └─────────────────┘
                        └──────────────────┘
-                                │
-                                ▼
-                       ┌──────────────────┐
-                       │   Monitoring     │
-                       │ • Prometheus     │
-                       │ • Grafana        │
-                       └──────────────────┘
 ```
+
+### Architectural Flow:
+
+- **Data Ingestion**: Raw data (documents, CSVs, JSONs, HTML) is loaded, chunked into smaller passages, and transformed into vector embeddings using the embedding model. These embeddings are then stored in ChromaDB, our persistent vector store.
+
+- **User Interaction**: Users interact with the system via the Streamlit Frontend, sending queries to the FastAPI Backend.
+
+- **Query Understanding**: The user's query is first processed by the Query Rewriter (which leverages Gemini and chat history) to enhance its clarity. NER Extractor identifies key entities within the query.
+
+- **Unified Retrieval**: The rewritten query is sent to the Enterprise Retriever, which performs a hybrid search (vector + BM25) across the entire ChromaDB knowledge base to fetch the most semantically and syntactically relevant text passages.
+
+- **Answer Synthesis**: The retrieved text nodes, along with the original user query, are passed to the Answer Synthesizer. Powered by Google Gemini, this component generates a coherent, contextualized answer, carefully extracting specific facts and details directly from the provided text.
+
+- **Conversation Management**: The Conversation Manager updates and maintains the chat history for continuous, context-aware interactions.
 
 ## 📁 Project Structure
 
@@ -53,20 +61,15 @@ intelligent_rag_system/
 │   │   ├── embeddings.py    # Embedding generation
 │   │   ├── vector_store.py  # Vector database operations
 │   │   └── indexer.py       # Document indexing logic
+│   │   └── run_ingestion.py # Ingestion flow
 │   ├── query_understanding/ # Query preprocessing
 │   │   ├── ner_extractor.py # Named entity recognition
-│   │   ├── query_rewriter.py# Query enhancement
-│   │   └── intent_recognizer.py # Intent classification
+│   │   └── query_rewriter.py# Query enhancement
 │   ├── retrieval/           # Information retrieval
-│   │   ├── keyword_retriever.py # BM25 keyword search
-│   │   ├── hybrid_retriever.py  # Combined retrieval
-│   │   ├── reranker.py      # Result re-ranking
-│   │   └── query_router.py  # Query routing logic
+│   │   └──retriever.py      # Hybrid retrieval
 │   ├── llm_generation/      # Answer generation
-│   │   ├── chat_model.py    # LLM wrapper
-│   │   ├── prompt_templates.py # Structured prompts
 │   │   ├── answer_synthesizer.py # Response generation
-│   │   └── conversation_manager.py # Chat history
+│   │   └── conversation_manager.py # Conversation management
 │   ├── api/                 # FastAPI backend
 │   │   ├── models.py        # Pydantic models
 │   │   ├── dependencies.py  # Dependency injection
@@ -78,304 +81,141 @@ intelligent_rag_system/
 ├── data/                    # Data storage
 │   ├── raw/                 # Source data
 │   └── processed/           # Processed data
-├── prefect_flows/           # Workflow orchestration
-│   └── ingestion_flow.py    # Data ingestion pipeline
-├── monitoring/              # Observability
-│   ├── prometheus.yml       # Prometheus config
-│   └── grafana/             # Grafana dashboards
 ├── tests/                   # Test suite
 │   ├── unit/                # Unit tests
 │   └── integration/         # Integration tests
 ├── config/                  # Configuration
 │   └── settings.py          # Application settings
+├── .env                     # Environment variables
 ├── Dockerfile               # Container definition
 ├── docker-compose.yml       # Multi-service deployment
 ├── requirements.txt         # Python dependencies
 └── README.md               # This file
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start  (Local Development)
+This section guides you through setting up and running the RAG system on your local machine for development and testing.
 
 ### Prerequisites
 
-- Python 3.8+
-- Docker and Docker Compose
-- Google AI API key (for Gemini)
-- Git
+- Python 3.12+: Recommended to use a virtual environment.
+- Docker and Docker Compose: For containerized deployment.
+- Google AI API key (for Gemini): For answer generation. (You can get it from [here](https://aistudio.google.com/app/apikey))
+- Git: For version control.
 
-### Local Development Setup
+### Setup Steps
 
 1. **Clone and Setup Environment**
    ```bash
-   git clone <your-repo-url>
-   cd intelligent_rag_system
-   
-   # Create virtual environment
+   git clone <https://github.com/phanhoang1803/rag_system.git>
+   cd rag_system
+   ```
+
+2. **Create and Activate Virtual Environment**
+   ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-   
-   # Install dependencies
+   # On macOS/Linux:
+   source venv/bin/activate
+   # On Windows:
+   .\venv\Scripts\activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
    pip install -r requirements.txt
    python -m spacy download en_core_web_sm
    ```
 
-2. **Configure Environment Variables**
+4. **Configure Environment Variables** \
+   Create a .env file in the project root (rag_system/.env) and add your Google AI API key.
    ```bash
-   # Create .env file
-   echo "GOOGLE_API_KEY=your_gemini_api_key_here" > .env
-   echo "PREFECT_API_URL=https://api.prefect.cloud/api" >> .env
-   echo "PREFECT_API_KEY=your_prefect_cloud_api_key" >> .env
+   GOOGLE_API_KEY="YOUR_GEMINI_API_KEY_HERE"
    ```
 
-3. **Initialize Data**
+5. **Prepare Synthetic Raw Data** \
+   Project is designed to use synthetic data for demonstration. Ensure you have the following files in their respective data/raw/ subdirectories:
+
+- data/raw/docs/: .md, .txt, .pdf files
+- data/raw/structured/: .json, .csv files
+- data/raw/web_content/: .html files
+
+6. **Run Data Ingestion and Indexing (Ingestion Flow)** \
+   This script will load all your raw data, chunk it, generate embeddings, and store it in the chroma_data/ directory. Run this whenever your raw data changes.
    ```bash
-   # Place sample data in data/raw/ directories
-   mkdir -p data/raw/{docs,structured,web_content}
-   # Add your sample files
+   python src/ingestion/run_ingestion.py
    ```
 
-4. **Run Data Ingestion**
+7. **Start the Application Servers** \
+   This will start both the FastAPI backend and the Streamlit frontend.
+
+   - Terminal 1: Start FastAPI Backend
    ```bash
-   cd prefect_flows
-   python ingestion_flow.py
+   uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
-5. **Start the Application**
+   - Terminal 2: Start Streamlit frontend
    ```bash
-   # Terminal 1: Start FastAPI backend
-   cd src
-   uvicorn main:app --reload --port 8000
-   
-   # Terminal 2: Start Streamlit frontend
-   cd src/frontend
-   streamlit run app.py
+   streamlit run src/frontend/app.py --server.port 8501 --server.enableCORS false
    ```
 
-### Docker Deployment
+#### Accessing the Local Application
 
-1. **Build and Run with Docker Compose**
+Once both servers are running:
+
+- Streamlit Chatbot Frontend: Open your web browser and navigate to http://localhost:8501
+- FastAPI API Documentation (Swagger UI): Access the interactive API docs at http://localhost:8000/docs
+- FastAPI Health Check: Check the API status at http://localhost:8000/api/health
+
+### 🐳 Docker Deployment (Optional)
+For consistent and isolated environments, you can containerize and deploy your application using Docker Compose.
+
+1. **Build and Run with Docker Compose** \
+   From the project root, execute:
    ```bash
    docker-compose up --build
    ```
 
-2. **Access Services**
-   - FastAPI: http://localhost:8000
-   - Streamlit: http://localhost:8501
-   - Grafana: http://localhost:3000 (admin/admin)
-   - Prometheus: http://localhost:9090
+This command will build the necessary Docker images, start the FastAPI and Streamlit services.
+
+2. **Access Services in Docker**
+
+- Streamlit Frontend: http://localhost:8501
+- FastAPI Backend: http://localhost:8000
 
 ## 💡 Usage
-
-### API Endpoints
-
-#### Query Endpoint
-```bash
-POST /query
-Content-Type: application/json
-
-{
-  "query": "What is our company's remote work policy?",
-  "chat_history": []
-}
-```
-
-**Response:**
-```json
-{
-  "answer": "Based on the company policies, remote work is allowed...",
-  "sources": [
-    {
-      "title": "HR Policy Manual",
-      "content": "Remote work section excerpt...",
-      "score": 0.95
-    }
-  ],
-  "confidence_score": 0.87
-}
-```
-
-#### Health Check
-```bash
-GET /health
-```
+Interact with the Enterprise RAG System through the Streamlit web interface or directly via the FastAPI API.
 
 ### Streamlit Interface
-
 1. Navigate to http://localhost:8501
-2. Enter your query in the chat input
-3. View the generated response with source citations
-4. Continue the conversation with follow-up questions
+2. Type your query into the chat input field
+3. The system will generate a response, augmented with relevant source citations from the knowledge base. (For the first time, it will take a while to generate the response)
+4. Continue the conversation with follow-up questions; the system maintains context
 
 ### Example Queries
+- "What are the eligibility criteria for the remote work policy?"
+- "Tell me about the features and price of the Cloud Storage Premium product."
+- "Who is Alice Smith and what department is she in? What's her role and email?"
+- "How do I submit an expense report?"
+- "Can you summarize the Q2 business review?"
 
-- **Product Information**: "What are the specifications of Product X?"
-- **HR Policies**: "What is the vacation policy for new employees?"
-- **Technical Support**: "How do I configure SSL certificates?"
-- **Financial Data**: "What were our Q3 revenue figures?"
+### 🔧 Advanced Features
 
-## 🔧 Advanced Features
-
-### Query Understanding
-
-- **Named Entity Recognition**: Extracts persons, organizations, dates, and custom entities
-- **Query Rewriting**: Enhances queries for better retrieval using Gemini
-- **Intent Classification**: Routes queries to appropriate retrieval strategies
-
-### Hybrid Retrieval
-
-- **Vector Search**: Semantic similarity using sentence transformers
-- **Keyword Search**: BM25 for exact term matching
-- **Ensemble Fusion**: Combines and re-ranks results from multiple retrievers
-
-### Re-ranking
-
-- **Cross-encoder Models**: Fine-tuned models for query-document relevance
-- **Dynamic Threshold**: Adjusts result filtering based on confidence scores
-
-### Conversation Management
-
-- **Memory Buffer**: Maintains recent conversation context
-- **Follow-up Handling**: Resolves pronouns and context references
-
-## 📊 Monitoring and Metrics
-
-### Key Metrics Tracked
-
-- **Query Latency**: Response time distribution
-- **Token Usage**: LLM input/output token consumption
-- **Retrieval Success Rate**: Percentage of queries with relevant results
-- **Active Requests**: Concurrent query processing
-- **Error Rates**: Failed queries and system errors
-
-### Grafana Dashboard
-
-Access the pre-configured dashboard at http://localhost:3000 to monitor:
-- Real-time query performance
-- Resource utilization
-- System health indicators
-- Usage patterns and trends
-
-## 🧪 Testing
-
-### Run Unit Tests
-```bash
-pytest tests/unit/ -v
-```
-
-### Run Integration Tests
-```bash
-pytest tests/integration/ -v
-```
-
-### Test Coverage
-```bash
-pytest --cov=src tests/
-```
-
-## 🔄 Development Workflow
-
-### Data Pipeline Updates
-
-1. Modify ingestion logic in `src/ingestion/`
-2. Test locally with sample data
-3. Deploy flow to Prefect Cloud
-4. Monitor execution in Prefect dashboard
-
-### Model Updates
-
-1. Update retrieval or generation logic
-2. Run integration tests
-3. Deploy via Docker Compose
-4. Monitor performance metrics
-
-### Adding New Data Sources
-
-1. Create loader in `src/ingestion/loaders.py`
-2. Update chunking strategy if needed
-3. Modify indexing logic
-4. Test with sample data
-5. Update ingestion flow
-
-## 🚧 Performance Optimization
-
-### Current Optimizations
-
-- **Chunking Strategy**: Optimized chunk size and overlap for retrieval accuracy
-- **Embedding Caching**: Reduces redundant API calls
-- **Connection Pooling**: Efficient database connections
-- **Async Processing**: Non-blocking I/O operations
-
-### Recommended Tuning
-
-- Adjust `chunk_size` (default: 512) based on your document types
-- Modify `top_k` retrieval (default: 10) based on precision needs
-- Fine-tune re-ranker threshold for quality vs. speed trade-off
-- Scale ChromaDB for larger datasets
-
-## 🛣️ Future Enhancements
-
-### Planned Features
-
-- **Multi-modal Support**: Image and video content processing
-- **Advanced Citations**: Page-level and sentence-level source attribution
-- **Query Analytics**: User behavior insights and query optimization
-- **A/B Testing**: Framework for testing different retrieval strategies
-- **Auto-scaling**: Dynamic resource allocation based on load
-
-### Integration Opportunities
-
-- **Enterprise SSO**: SAML/OAuth integration
-- **Slack/Teams Bot**: Direct integration with collaboration tools
-- **Advanced RAG**: Graph-based retrieval and reasoning
-- **Fine-tuned Models**: Domain-specific embedding and generation models
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow PEP 8 style guidelines
-- Add unit tests for new features
-- Update documentation for API changes
-- Run linting before commits: `flake8 src/`
+- **Named Entity Recognition (NER)**: Extracts key entities (persons, organizations, products, dates) from queries to enhance understanding and guide LLM focus.
+- **Query Rewriting**: Dynamically expands or rephrases user queries based on conversation history using a generative LLM, leading to more precise retrieval.
+- **Hybrid Retrieval**: Combines the semantic understanding of vector search with the exact keyword matching of BM25 for comprehensive information retrieval.
+- **Cross-Encoder Re-ranking**: Employs a pre-trained cross-encoder model to re-score and re-rank initial retrieval results, ensuring that the most relevant documents are presented to the LLM.
+- **LLM-driven Fact Extraction**: The generative LLM is prompted to meticulously extract specific details (e.g., names, prices, dates) from the retrieved text, even if the information originated from structured data formats.
+- **Sliding Window Conversation Memory**: Maintains a configurable window of recent messages to provide coherent and context-aware responses in multi-turn dialogues.
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Support
-
-For questions, issues, or contributions:
-
-- **Issues**: Open a GitHub issue
-- **Documentation**: Check the `/docs` folder for detailed guides
-- **Discussions**: Use GitHub Discussions for general questions
-
-## 📈 Results and Performance
-
-### Benchmark Results
-
-- **Average Query Latency**: < 2 seconds
-- **Retrieval Accuracy**: 85%+ relevant results in top-5
-- **System Uptime**: 99.5%+ availability
-- **Concurrent Users**: Supports 50+ simultaneous queries
-
-### Example Performance Metrics
-
-```
-Query Processing Pipeline:
-├── Query Understanding: ~200ms
-├── Hybrid Retrieval: ~800ms
-├── Re-ranking: ~300ms
-├── Answer Generation: ~1200ms
-└── Total: ~2.5s average
-```
-
 ---
 
 **Built with ❤️ using LangChain, LlamaIndex, FastAPI, and Streamlit**
+
+---
+
+**Author: Phan Hoang** \
+**This README file is supported by AI**

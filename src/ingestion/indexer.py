@@ -9,9 +9,10 @@ from typing import List
 from llama_index.core import VectorStoreIndex
 from llama_index.core.schema import Document
 from llama_index.core.embeddings import BaseEmbedding
+from llama_index.core import Settings
 
 from src.ingestion.chunking import DocumentChunker
-from src.ingestion.embeddings import EmbeddingModel
+from src.ingestion.embeddings import EmbeddingModelManager
 from src.ingestion.vector_store import ChromaDBManager
 from config.settings import settings
 
@@ -23,7 +24,7 @@ class Indexer:
     """
     def __init__(self,
                  chunker: DocumentChunker,
-                 embedding_model_manager: EmbeddingModel,
+                 embedding_model_manager: EmbeddingModelManager,
                  vector_db_manager: ChromaDBManager):
         self.chunker = chunker
         self.embedding_model_manager = embedding_model_manager
@@ -60,6 +61,8 @@ class Indexer:
 
         print(f"Starting indexing of {len(documents)} documents...")
         nodes = self.chunker.get_nodes_from_documents(documents)
+        nodes = self.embedding_model_manager.generate_embeddings(nodes)
+        
         self.vector_db_manager.add_nodes(nodes)
         print("Indexing complete.")
 
@@ -77,8 +80,8 @@ if __name__ == "__main__":
     # Initialize components
     loader = DocumentLoader()
     chunker = DocumentChunker()
-    embed_model_manager = EmbeddingModel()
-    vector_db_manager = ChromaDBManager(embed_model_manager)
+    embed_model_manager = EmbeddingModelManager()
+    vector_db_manager = ChromaDBManager()
 
     indexer = Indexer(chunker, embed_model_manager, vector_db_manager)
 
@@ -101,6 +104,8 @@ if __name__ == "__main__":
     if not documents_to_index:
         print("No documents found or created for indexing test. Please ensure dummy files exist.")
     else:
+        Settings.embed_model = embed_model_manager.get_embedding_model()
+        Settings.llm = None
         # Index the documents, clearing existing data
         indexer.index_documents(documents_to_index, clear_existing=True)
 

@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
     
     # --- Perfect API Settings ---
-    PERFECT_API_URL: str = os.getenv("PERFECT_API_URL", "https://api.perfect.cloud/api")
-    PERFECT_API_KEY: str = os.getenv("PERFECT_API_KEY")
+    # PERFECT_API_URL: str = os.getenv("PERFECT_API_URL", "https://api.perfect.cloud/api")
+    # PERFECT_API_KEY: str = os.getenv("PERFECT_API_KEY")
     
     # MongoDB Settings
     MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     CHROMA_COLLECTION_NAME: str = "enterprise_documents"
     
     # --- LLM Settings ---
-    LLM_MODEL_NAME: str = "gemini-2.5-flash"
+    LLM_MODEL_NAME: str = "gemini-2.0-flash-lite"
     EMBEDDING_MODEL_NAME: str = "models/embedding-001" # Default for GoogleGenerativeAI embeddings
     
     # --- RAG Settings ---

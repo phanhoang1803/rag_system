@@ -9,7 +9,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.storage_context import StorageContext
 from llama_index.core.schema import TextNode
 from llama_index.core.embeddings import BaseEmbedding
-from src.ingestion.embeddings import EmbeddingModel
+from src.ingestion.embeddings import EmbeddingModelManager
 import chromadb
 from config.settings import settings
 from typing import List
@@ -19,7 +19,7 @@ class ChromaDBManager:
     Manages the ChromaDB vector store.
     Adheres to SRP by handling only vector database interactions.
     """
-    def __init__(self, embedding_model_manager: EmbeddingModel,
+    def __init__(self,
                  persist_directory: str = settings.CHROMA_PERSIST_DIR,
                  collection_name: str = settings.CHROMA_COLLECTION_NAME,
                  ):
@@ -29,7 +29,6 @@ class ChromaDBManager:
         self.chroma_collection = None
         self.vector_store = None
         self.storage_context = None
-        self.embed_model = embedding_model_manager.get_embedding_model()
         
     def initialize_vector_store(self) -> ChromaVectorStore:
         """
@@ -46,32 +45,15 @@ class ChromaDBManager:
         self.storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
         return self.vector_store
     
-    def _generate_embeddings_for_nodes(self, nodes: List[TextNode]) -> List[TextNode]:
-        """Generate embeddings for nodes using the embedding model."""
-        if not self.embed_model:
-            raise ValueError("Embedding model not set. Use set_embedding_model() first.")
-        
-        print(f"Generating embeddings for {len(nodes)} nodes...")
-        for node in nodes:
-            if not node.embedding:  # Only generate if embedding doesn't exist
-                embedding = self.embed_model.get_text_embedding(node.get_content())
-                node.embedding = embedding
-        
-        print(f"Embeddings generated for {len(nodes)} nodes.")
-        return nodes
-    
     def add_nodes(self, nodes: List[TextNode]):
         """Adds a list of TextNode objects to the ChromaDB vector store."""
         if not self.vector_store:
             self.initialize_vector_store() # Ensure it's initialized
 
-        # Generate embeddings for nodes
-        nodes_with_embeddings = self._generate_embeddings_for_nodes(nodes)
-
-        print(f"Adding {len(nodes_with_embeddings)} nodes to ChromaDB...")
+        print(f"Adding {len(nodes)} nodes to ChromaDB...")
         try:
-            self.vector_store.add(nodes_with_embeddings)
-            print(f"Successfully added {len(nodes_with_embeddings)} nodes to ChromaDB.")
+            self.vector_store.add(nodes)
+            print(f"Successfully added {len(nodes)} nodes to ChromaDB.")
             print(f"New total ChromaDB count: {self.chroma_collection.count()}")
         except Exception as e:
             print(f"Error adding nodes to ChromaDB: {e}")
@@ -102,7 +84,7 @@ class ChromaDBManager:
 if __name__ == "__main__":
     from llama_index.core.schema import Document
     from src.ingestion.chunking import DocumentChunker
-    from src.ingestion.embeddings import EmbeddingModel
+    from src.ingestion.embeddings import EmbeddingModelManager
     from config.settings import settings
     import shutil
 
@@ -112,9 +94,10 @@ if __name__ == "__main__":
         shutil.rmtree(settings.CHROMA_PERSIST_DIR)
 
     # Initialize embedding model first
-    embed_model = EmbeddingModel().get_embedding_model()
+    embed_model_manager = EmbeddingModelManager()
+    embed_model = embed_model_manager.get_embedding_model()
     
-    chroma_manager = ChromaDBManager(EmbeddingModel())
+    chroma_manager = ChromaDBManager()
     vector_store = chroma_manager.initialize_vector_store()
 
     # Create dummy documents and nodes
@@ -125,6 +108,7 @@ if __name__ == "__main__":
     chunker = DocumentChunker(chunk_size=50, chunk_overlap=0)
     documents = [doc1, doc2, doc3]
     nodes = chunker.get_nodes_from_documents(documents)
+    nodes = embed_model_manager.generate_embeddings(nodes) # Generate embeddings for nodes
 
     # Add nodes to ChromaDB
     chroma_manager.add_nodes(nodes)
@@ -135,6 +119,7 @@ if __name__ == "__main__":
     # Test retrieval (requires an embedding model)
     try:
         query_embedding = embed_model.get_query_embedding("What type of vehicle?")
+        
         # Manually query ChromaDB for demonstration
         results = chroma_manager.chroma_collection.query(
             query_embeddings=[query_embedding],

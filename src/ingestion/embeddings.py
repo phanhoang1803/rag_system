@@ -8,8 +8,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 from llama_index.core.embeddings import BaseEmbedding
 from config.settings import settings
+from typing import List
+from llama_index.core.schema import TextNode
 
-class EmbeddingModel:
+class EmbeddingModelManager:
     """
     Provides an interface for the embedding model.
     Adheres to SRP by focusing solely on embedding generation.
@@ -30,9 +32,19 @@ class EmbeddingModel:
             )
         return self._embedding_model
     
+    def generate_embeddings(self, text_nodes: List[TextNode]) -> List[TextNode]:
+        """Generate embeddings for a list of TextNode objects."""
+        embedding_model = self.get_embedding_model()
+        embeddings = embedding_model.get_text_embedding_batch(
+            [node.text for node in text_nodes]
+        )
+        for node, embedding in zip(text_nodes, embeddings):
+            node.embedding = embedding
+        return text_nodes
+    
 # Example Usage (for testing embedding model directly)
 if __name__ == "__main__":
-    embed_model_manager = EmbeddingModel()
+    embed_model_manager = EmbeddingModelManager()
     embed_model = embed_model_manager.get_embedding_model()
 
     text_to_embed = "This is a test sentence for embedding."
