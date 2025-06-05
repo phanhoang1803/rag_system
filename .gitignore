@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.env
+.env
+venv/
+.vscode/
+*.log
+*.db
+*.sqlite3
+*.DS_Store
+data/processed/
+chroma_db_data/
+outputs/

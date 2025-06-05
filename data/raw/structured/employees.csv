@@ -1,0 +1,5 @@
+employee_id,first_name,last_name,department,role,email
+EMP001,Alice,Smith,HR,HR Manager,alice.smith@yourcompany.com
+EMP002,Bob,Johnson,Engineering,Senior Software Engineer,bob.johnson@yourcompany.com
+EMP003,Charlie,Brown,Sales,Sales Representative,charlie.brown@yourcompany.com
+EMP004,Diana,Prince,Marketing,Marketing Specialist,diana.prince@yourcompany.com

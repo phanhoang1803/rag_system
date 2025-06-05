@@ -1,0 +1,15 @@
+langchain-google-genai
+llama-index
+llama-index-readers-json
+fastapi
+uvicorn
+streamlit
+spacy
+chromadb
+sentence-transformers
+prefect
+python-dotenv
+tiktoken
+requests
+pandas
+pymongo
