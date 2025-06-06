@@ -1,7 +1,8 @@
-# Intelligent Multi-Source RAG System for Enterprise Knowledge Base
-https://github.com/user-attachments/assets/5fa92dd3-1c8e-4763-8ebc-870b2d66f9bd
-## 🎯 Project Overview
+https://github.com/user-attachments/assets/f1643cdd-39c8-42a3-8f6b-de19ae3ac9d9
 
+# Intelligent Multi-Source RAG System for Enterprise Knowledge Base
+
+## 🎯 Project Overview
 This project delivers a robust, modular, and scalable Retrieval-Augmented Generation (RAG) system engineered to answer complex user queries by synthesizing information from diverse enterprise data. By unifying all knowledge sources into a powerful vector database, the system leverages advanced natural language processing (NLP) to provide accurate, contextually relevant, and well-sourced responses.
 
 Our approach emphasizes a lean, LLM-centric architecture, where the Large Language Model (LLM) is responsible for both understanding nuances in queries and intelligently extracting precise information from the retrieved context, regardless of the original data's structure.
