@@ -26,6 +26,5 @@ class QueryResponse(BaseModel):
     answer: str = Field(..., description="The synthesized answer from the RAG pipeline.")
     source_nodes: List[SourceNode] = Field(..., description="List of retrieved source nodes.")
     rewritten_query: str = Field(..., description="The query after rewriting by the pipeline.")
-    extracted_entities: List[Dict[str, str]] = Field(..., description="List of entities extracted from the query.")
+    extracted_entities: List[Dict[str, Any]] = Field(..., description="List of entities extracted from the query.")
     chat_history: List[ChatMessage] = Field(..., description="Updated chat history.")
-    # Add other metadata here if needed, e.g., latency metrics

@@ -8,7 +8,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 from typing import List, Dict, Any
 from src.query_understanding.ner_extractor import NERExtractor
 from src.query_understanding.query_rewriter import QueryRewriter
-# from src.query_understanding.intent_recognizer import IntentRecognizer # REMOVED
 
 from src.retrieval.retrievers import EnterpriseRetriever
 from src.llm_generation.answer_synthesizer import AnswerSynthesizer
@@ -26,7 +25,6 @@ class RAGPipeline:
         print("Initializing RAGPipeline components...")
         self.ner_extractor = NERExtractor()
         self.query_rewriter = QueryRewriter()
-        # self.intent_recognizer = IntentRecognizer() # REMOVED
 
         # Initialize core managers for retrieval (ONLY vector store related)
         self.chroma_db_manager = ChromaDBManager()
@@ -95,10 +93,10 @@ class RAGPipeline:
 
 # Example Usage
 if __name__ == "__main__":
-    # IMPORTANT: Ensure your ChromaDB is running and seeded with ALL your data
+    # IMPORTANT: Ensure ChromaDB is running and seeded with ALL data
     # (including data from CSV/JSON files, which were loaded as Documents).
-    # 1. Ensure you have run: `python run_ingestion.py` (from project root)
-    # 2. Set your GOOGLE_API_KEY in the .env file.
+    # 1. Ensure already run: `python run_ingestion.py` (from project root)
+    # 2. Set GOOGLE_API_KEY in the .env file.
     # Then run this script: `python src/rag_system/rag_pipeline.py`
 
     rag_pipeline = RAGPipeline()
